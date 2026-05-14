@@ -104,11 +104,9 @@ namespace Maru_Mod
 
                 if (card.TargetType == EmotionTargetType.All || card.TargetType == EmotionTargetType.AllIncludingEnemy)
                 {
-                    bool onceEvent = true;
                     foreach (var unit in BattleObjectManager.instance.GetAliveList(Faction.Player))
                     {
-                        unit.emotionDetail.ApplyEmotionCard(card, onceEvent);
-                        onceEvent = false;
+                        unit.emotionDetail.ApplyEmotionCard(card, true);
                     }
                 }
                 else
@@ -472,7 +470,7 @@ namespace Maru_Mod
 
                         foreach (AbnormalityCard card in root.sephirahList.SelectMany(x => x.list))
                         {
-                            string key = card.cardName;
+                            string key = card.id;
 
                             dictionary[key] = card;
                         }

@@ -16,11 +16,7 @@ namespace Maru_Mod
             if (_owner == null)
                 return;
 
-            foreach (BattleUnitModel unit in
-                BattleObjectManager.instance.GetAliveList(_owner.faction))
-            {
-                unit.bufListDetail.AddBuf(new BattleUnitBuf_Resolve());
-            }
+            _owner.bufListDetail.AddBuf(new BattleUnitBuf_Resolve());
         }
     }
 
@@ -34,12 +30,7 @@ namespace Maru_Mod
             if (_owner == null)
                 return;
 
-            foreach (BattleUnitModel unit in
-                BattleObjectManager.instance.GetAliveList(_owner.faction))
-            {
-                unit.bufListDetail.AddBuf(
-                    new BattleUnitBuf_Adventure_FormerlyCycle());
-            }
+            _owner.bufListDetail.AddBuf(new BattleUnitBuf_Adventure_FormerlyCycle());
         }
     }
 
@@ -53,11 +44,7 @@ namespace Maru_Mod
             if (_owner == null)
                 return;
 
-            foreach (BattleUnitModel unit in
-                BattleObjectManager.instance.GetAliveList(_owner.faction))
-            {
-                unit.bufListDetail.AddBuf(new BattleUnitBuf_Leadership());
-            }
+            _owner.bufListDetail.AddBuf(new BattleUnitBuf_Leadership());
         }
     }
 }

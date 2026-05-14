@@ -15,11 +15,8 @@ namespace Maru_Mod
         {
             if (_owner == null)
                 return;
-            foreach (BattleUnitModel unit in
-                BattleObjectManager.instance.GetAliveList(_owner.faction))
-            {
-                _owner.bufListDetail.AddBuf(new BattleUnitBuf_ASmallMiracle());
-            }
+
+            _owner.bufListDetail.AddBuf(new BattleUnitBuf_ASmallMiracle());
         }
     }
 
@@ -33,11 +30,7 @@ namespace Maru_Mod
             if (_owner == null)
                 return;
 
-            foreach (BattleUnitModel unit in
-                BattleObjectManager.instance.GetAliveList(_owner.faction))
-            {
-                _owner.bufListDetail.AddBuf(new BattleUnitBuf_TheShapeOfAWish());
-            }
+            _owner.bufListDetail.AddBuf(new BattleUnitBuf_TheShapeOfAWish());
         }
     }
 
