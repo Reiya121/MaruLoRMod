@@ -356,6 +356,30 @@ namespace Maru_Mod
             }
         }
 
+        /// <summary>
+        /// 専用の本をゲーム開始時に獲得する
+        /// </summary>
+        // Token: 0x0200002A RID: 42
+        [HarmonyPatch(typeof(GameSceneManager), "ActivateUIController")]
+        public class GameSceneManager_ActivateUIController
+        {
+            // Token: 0x060000A2 RID: 162 RVA: 0x0000576C File Offset: 0x0000396C
+            public static void Postfix()
+            {
+                string language = GlobalGameManager.Instance.CurrentOption.language;
+                bool flag = Singleton<BookInventoryModel>.Instance.GetBookCount(new LorId(ModUtil.packageId, 20090711)) < 1;
+                if (flag)
+                {
+                    Singleton<BookInventoryModel>.Instance.CreateBook(new LorId(ModUtil.packageId, 20090711));
+                    bool flag2 = language == "jp";
+                    if (flag2)
+                    {
+                        UIAlarmPopup.instance.SetAlarmText("都城治虫の冒険と覚悟を入手しました。");
+                    }
+                }
+            }
+        }
+
         // =========================================================
         // 光回復時HP回復
         // =========================================================
