@@ -44,43 +44,87 @@ namespace Maru_Mod
         [HarmonyPatch(typeof(StageController), "RoundEndPhase_ChoiceEmotionCard")]
         public class StageController_RoundEndPhase_ChoiceEmotionCard
         {
+            // Token: 0x0600005E RID: 94 RVA: 0x000047F0 File Offset: 0x000029F0
             public static void Postfix(ref bool __result)
             {
-                if (!__result)
-                    return;
-
-                BattleUnitModel unit = MaruEmotionSelectControl.GetEmotionUnit();
-
-                if (unit == null)
-                    return;
-
-                if (unit.emotionDetail.EmotionLevel < MaruEmotionSelectControl.NextSelectEmotionLevel)
-                    return;
-
-                SingletonBehavior<BattleManagerUI>.Instance.ui_levelup.SetRootCanvas(true);
-
-                StartExtraSelection(unit);
-
-                __result = false;
+                bool flag = __result && BattleObjectManager.instance.GetAliveListWithAvailable(Faction.Player).Count > 0 && BattleObjectManager.instance.GetAliveListWithAvailable(Faction.Enemy).Count > 0;
+                bool flag2 = flag;
+                if (flag2)
+                {
+                    BattleUnitModel emoCard = EmotionSelectControl.GetEmoCard();
+                    bool flag3 = emoCard != null && EmotionSelectControl.NextSelectEmotionLevel <= EmotionSelectControl.MaxEmotionLevel && EmotionSelectControl.NextSelectEmotionLevel <= emoCard.emotionDetail.EmotionLevel;
+                    bool flag4 = flag3;
+                    if (flag4)
+                    {
+                        bool flag5 = emoCard.passiveDetail.HasPassive<PassiveAbility_MaruExclusiveEmotion>();
+                        bool flag6 = flag5;
+                        if (flag6)
+                        {
+                            Debug.Log("Thank You マッシローsan!!");
+                            SingletonBehavior<BattleManagerUI>.Instance.ui_levelup.SetRootCanvas(true);
+                            PatchClass.StageController_RoundEndPhase_ChoiceEmotionCard.StartExEmotionCardSelection(emoCard);
+                            __result = false;
+                        }
+                    }
+                }
             }
 
-            private static void StartExtraSelection(BattleUnitModel unit)
+            private static void StartExEmotionCardSelection(BattleUnitModel binah)
             {
-                List<EmotionCardXmlInfo> list =
-                    new List<EmotionCardXmlInfo>(MaruEmotionSelectControl.ExEmotionCardsList);
-
-                foreach (EmotionCardXmlInfo card in MaruEmotionSelectControl.SelectedCardsList)
-                    list.Remove(card);
-
-                if (list.Count <= 0)
+                int nextSelectEmotionLevel = EmotionSelectControl.NextSelectEmotionLevel;
+                int num = binah.emotionDetail.EmotionLevel - nextSelectEmotionLevel + 1;
+                bool flag = num > 0;
+                bool flag2 = flag;
+                if (flag2)
                 {
-                    SingletonBehavior<BattleManagerUI>.Instance.ui_levelup.SetRootCanvas(false);
-                    return;
+                    List<EmotionCardXmlInfo> list =　EmotionSelectControl.ExEmotionCardsList.FindAll(x => x.Level == EmotionSelectControl.NextSelectEmotionLevel);
+                    bool flag3 = list.Count == 0;
+                    bool flag4 = flag3;
+                    if (flag4)
+                    {
+                        Debug.LogError("ERROR!! : Can'tFindExEmotionCardsData");
+                    }
+                    else
+                    {
+                        foreach (EmotionCardXmlInfo item in EmotionSelectControl.SelectedCardsList)
+                        {
+                            list.Remove(item);
+                        }
+                        List<EmotionCardXmlInfo> list2 = new List<EmotionCardXmlInfo>(list);
+                        bool flag5 = list2.Count > 0;
+                        bool flag6 = flag5;
+                        if (flag6)
+                        {
+                            EmotionSelectControl.ChangeForExtraSelection = true;
+                            int num2 = EmotionSelectControl.SelectedCardsList.Count;
+                            bool flag7 = num2 == 0;
+                            bool flag8 = flag7;
+                            if (flag8)
+                            {
+                                num2 = 1;
+                            }
+                            else
+                            {
+                                bool flag9 = num2 == 1;
+                                bool flag10 = flag9;
+                                if (flag10)
+                                {
+                                    num2 = 3;
+                                }
+                            }
+                            SingletonBehavior<BattleManagerUI>.Instance.ui_levelup.Init(num2, list2);
+                        }
+                        else
+                        {
+                            EmotionSelectControl.ChangeForExtraSelection = false;
+
+                            SingletonBehavior<BattleManagerUI>
+                                .Instance
+                                .ui_levelup
+                                .SetRootCanvas(false);
+                        }
+                    }
                 }
-
-                MaruEmotionSelectControl.ChangeForExtraSelection = true;
-
-                SingletonBehavior<BattleManagerUI>.Instance.ui_levelup.Init(MaruEmotionSelectControl.NextSelectEmotionLevel,list);
             }
         }
 
@@ -90,41 +134,72 @@ namespace Maru_Mod
         [HarmonyPatch(typeof(StageLibraryFloorModel), "OnPickPassiveCard")]
         public class StageLibraryFloorModel_OnPickPassiveCard
         {
+            // Token: 0x06000063 RID: 99 RVA: 0x000049FC File Offset: 0x00002BFC
             public static bool Prefix(EmotionCardXmlInfo card, BattleUnitModel target)
             {
-                if (!MaruEmotionSelectControl.ChangeForExtraSelection)
-                    return true;
-
-                MaruEmotionSelectControl.ChangeForExtraSelection = false;
-
-                if (card == null)
-                    return false;
-
-                MaruEmotionSelectControl.SetSelectedCard(card);
-
-                if (card.TargetType == EmotionTargetType.All || card.TargetType == EmotionTargetType.AllIncludingEnemy)
+                bool flag = !EmotionSelectControl.ChangeForExtraSelection;
+                bool flag2 = flag;
+                bool result;
+                if (flag2)
                 {
-                    foreach (var unit in BattleObjectManager.instance.GetAliveList(Faction.Player))
-                    {
-                        unit.emotionDetail.ApplyEmotionCard(card, true);
-                    }
+                    result = true;
                 }
                 else
                 {
-                    if (target != null)
+                    EmotionSelectControl.ChangeForExtraSelection = false;
+
+                    bool flag3 = card == null;
+                    bool flag4 = flag3;
+                    if (flag4)
                     {
-                        target.emotionDetail.ApplyEmotionCard(card, true);
+                        result = false;
                     }
                     else
                     {
-                        Debug.LogError("target is null");
+                        EmotionSelectControl.SetSelectedCard(card);
+
+                        bool flag5 =
+                            card.TargetType == EmotionTargetType.All ||
+                            card.TargetType == EmotionTargetType.AllIncludingEnemy;
+
+                        bool flag6 = flag5;
+
+                        if (flag6)
+                        {
+                            foreach (BattleUnitModel battleUnitModel in BattleObjectManager.instance.GetAliveList(Faction.Player))
+                            {
+                                battleUnitModel.emotionDetail.ApplyEmotionCard(card, true);
+                            }
+
+                            if (card.TargetType == EmotionTargetType.AllIncludingEnemy)
+                            {
+                                foreach (BattleUnitModel battleUnitModel in BattleObjectManager.instance.GetAliveList(Faction.Enemy))
+                                {
+                                    battleUnitModel.emotionDetail.ApplyEmotionCard(card, true);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            bool flag7 = target != null;
+                            bool flag8 = flag7;
+
+                            if (flag8)
+                            {
+                                target.emotionDetail.ApplyEmotionCard(card, true);
+                            }
+                            else
+                            {
+                                Debug.LogError("target is null");
+                            }
+                        }
+
+                        EmotionSelectControl.SetNextSelectionLevel();
+
+                        result = false;
                     }
                 }
-
-
-                MaruEmotionSelectControl.SetNextSelectionLevel();
-
-                return false;
+                return result;
             }
         }
 
@@ -134,15 +209,17 @@ namespace Maru_Mod
         [HarmonyPatch(typeof(StageLibraryFloorModel), "Init")]
         public class StageLibraryFloorModel_Init
         {
+            // Token: 0x06000061 RID: 97 RVA: 0x000049E9 File Offset: 0x00002BE9
             public static void Postfix()
             {
-                MaruEmotionSelectControl.Initialize();
+                EmotionSelectControl.Initialize();
             }
         }
 
         // =========================================================
         // 各ページが選ばれたときの効果を選ぶ
         // =========================================================
+        // Token: 0x02000025 RID: 37
         [HarmonyPatch(typeof(BattleEmotionCardModel), MethodType.Constructor, new Type[]
         {
     typeof(EmotionCardXmlInfo),
@@ -150,97 +227,91 @@ namespace Maru_Mod
         })]
         public class BattleEmotionCardModel_New
         {
-            public static bool Prefix(
-                BattleEmotionCardModel __instance,
-                EmotionCardXmlInfo xmlInfo,
-                BattleUnitModel owner,
-                ref EmotionCardXmlInfo ____xmlInfo,
-                ref BattleUnitModel ____owner,
-                ref List<EmotionCardAbilityBase> ____abilityList)
+            // Token: 0x06000069 RID: 105 RVA: 0x00004B7C File Offset: 0x00002D7C
+            public static bool Prefix(BattleEmotionCardModel __instance, EmotionCardXmlInfo xmlInfo, BattleUnitModel owner, ref EmotionCardXmlInfo ____xmlInfo, ref BattleUnitModel ____owner, ref List<EmotionCardAbilityBase> ____abilityList)
             {
-                Type type = null;
-
-                switch (xmlInfo.Name)
+                string name = xmlInfo.Name;
+                Type typeFromHandle;
+                // =====================================================
+                // Lv1
+                // =====================================================
+                if (name == "Wisdom_Page")
                 {
-                    // =====================================================
-                    // Lv1
-                    // =====================================================
-
-                    case "Wisdom_Page":
-                        type = typeof(EmotionCardAbility_WisdomPage);
-                        break;
-
-                    case "Overprotective_Page":
-                        type = typeof(EmotionCardAbility_OverprotectivePage);
-                        break;
-
-                    case "TheGuardian_Page":
-                        type = typeof(EmotionCardAbility_TheGuardianPage);
-                        break;
-
-                    case "WaveringResolve_Page":
-                        type = typeof(EmotionCardAbility_WaveringResolvePage);
-                        break;
-
-                    case "SenseOfDuty_Page":
-                        type = typeof(EmotionCardAbility_SenseOfDutyPage);
-                        break;
-
-                    case "Diamond_Page":
-                        type = typeof(EmotionCardAbility_DiamondPage);
-                        break;
-
-                    // =====================================================
-                    // Lv2 覚醒
-                    // =====================================================
-
-                    case "ASmallMiracle_Page":
-                        type = typeof(EmotionCardAbility_ASmallMiraclePage);
-                        break;
-
-                    case "TheShapeOfAWish_Page":
-                        type = typeof(EmotionCardAbility_TheShapeOfAWishPage);
-                        break;
-
-                    case "ABelievingHeart_Page":
-                        type = typeof(EmotionCardAbility_ABelievingHeartPage);
-                        break;
-
-                    // =====================================================
-                    // Lv2 崩壊
-                    // =====================================================
-
-                    case "FalseWisdom_Page":
-                        type = typeof(EmotionCardAbility_FalseWisdomPage);
-                        break;
-
-                    case "ATwistedWish_Page":
-                        type = typeof(EmotionCardAbility_ATwistedWishPage);
-                        break;
-
-                    case "Chaos_Page":
-                        type = typeof(EmotionCardAbility_ChaosPage);
-                        break;
-
-                    // =====================================================
-                    // Lv3
-                    // =====================================================
-
-                    case "Resolve_Page":
-                        type = typeof(EmotionCardAbility_ResolvePage);
-                        break;
-
-                    case "Adventure_FormerlyCycle_Page":
-                        type = typeof(EmotionCardAbility_Adventure_FormerlyCyclePage);
-                        break;
-
-                    case "Leadership_Page":
-                        type = typeof(EmotionCardAbility_LeadershipPage);
-                        break;
+                    typeFromHandle = typeof(EmotionCardAbility_WisdomPage);
+                }
+                else if (name == "Overprotective_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_OverprotectivePage);
+                }
+                else if (name == "TheGuardian_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_TheGuardianPage);
+                }
+                else if (name == "WaveringResolve_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_WaveringResolvePage);
+                }
+                else if (name == "SenseOfDuty_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_SenseOfDutyPage);
+                }
+                else if (name == "Diamond_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_DiamondPage);
                 }
 
-                if (type == null)
+                // =====================================================
+                // Lv2 覚醒
+                // =====================================================
+                else if (name == "ASmallMiracle_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_ASmallMiraclePage);
+                }
+                else if (name == "TheShapeOfAWish_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_TheShapeOfAWishPage);
+                }
+                else if (name == "ABelievingHeart_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_ABelievingHeartPage);
+                }
+
+                // =====================================================
+                // Lv2 崩壊
+                // =====================================================
+                else if (name == "FalseWisdom_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_FalseWisdomPage);
+                }
+                else if (name == "ATwistedWish_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_ATwistedWishPage);
+                }
+                else if (name == "Chaos_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_ChaosPage);
+                }
+
+                // =====================================================
+                // Lv3
+                // =====================================================
+                else if (name == "Resolve_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_ResolvePage);
+                }
+                else if (name == "Adventure_FormerlyCycle_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_Adventure_FormerlyCyclePage);
+                }
+                else if (name == "Leadership_Page")
+                {
+                    typeFromHandle = typeof(EmotionCardAbility_LeadershipPage);
+                }
+
+                else
+                {
                     return true;
+                }
 
                 ____xmlInfo = xmlInfo;
                 ____owner = owner;
@@ -249,16 +320,16 @@ namespace Maru_Mod
                 {
                     ____abilityList = new List<EmotionCardAbilityBase>();
 
-                    EmotionCardAbilityBase ability =
-                        Activator.CreateInstance(type) as EmotionCardAbilityBase;
+                    EmotionCardAbilityBase emotionCardAbilityBase =
+                        Activator.CreateInstance(typeFromHandle) as EmotionCardAbilityBase;
 
-                    ability.SetEmotionCard(__instance);
+                    emotionCardAbilityBase.SetEmotionCard(__instance);
 
-                    ____abilityList.Add(ability);
+                    ____abilityList.Add(emotionCardAbilityBase);
                 }
-                catch (Exception e)
+                catch (Exception message)
                 {
-                    Debug.LogError(e);
+                    Debug.LogError(message);
                 }
 
                 return false;
@@ -357,6 +428,96 @@ namespace Maru_Mod
         }
 
         /// <summary>
+        /// 幻想体ページ選択時の階層アイコン変更
+        /// </summary>
+        [HarmonyPatch(typeof(LevelUpUI), "Init")]
+        public class LevelUpUI_Init
+        {
+            // Token: 0x06000065 RID: 101 RVA: 0x00004A80 File Offset: 0x00002C80
+            public static void Postfix(LevelUpUI __instance, Image ___FloorIconImage, TextMeshProUGUI ___txt_SelectDesc, TextMeshProUGUI ___txt_BtnSelectDesc)
+            {
+                bool changeForExtraSelection = EmotionSelectControl.ChangeForExtraSelection;
+                bool flag = changeForExtraSelection;
+                if (flag)
+                {
+                    ___FloorIconImage.sprite = ModUtil.ArtWorks["MaruAbnorma"];
+                    string text = "都城治虫の冒険と覚悟";
+                    ___txt_SelectDesc.text = text;
+                    ___txt_BtnSelectDesc.text = text;
+                    BattleUnitModel emoCard = EmotionSelectControl.GetEmoCard();
+                    bool flag2 = emoCard != null;
+                    bool flag3 = flag2;
+                    if (flag3)
+                    {
+                        __instance.SetEmotionPerDataUI((float)emoCard.emotionDetail.totalPositiveCoins.Count, (float)emoCard.emotionDetail.totalNegativeCoins.Count);
+                    }
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(LevelUpUI), "HideSelectAbRoutine")]
+        public class LevelUpUI_HideSelectAbRoutine
+        {
+            // Token: 0x06000067 RID: 103 RVA: 0x00004B1C File Offset: 0x00002D1C
+            public static void Postfix(LevelUpUI __instance, Image ___NeedSelectAb_FloorIconImage, ref IEnumerator __result)
+            {
+                bool changeForExtraSelection = EmotionSelectControl.ChangeForExtraSelection;
+                bool flag = changeForExtraSelection;
+                if (flag)
+                {
+                    Action<object> postItemAction = delegate (object item)
+                    {
+                        Sprite sprite = ModUtil.ArtWorks["MaruAbnorma"];
+                        bool flag2 = ___NeedSelectAb_FloorIconImage.sprite != sprite;
+                        bool flag3 = flag2;
+                        bool flag4 = flag3;
+                        if (flag4)
+                        {
+                            ___NeedSelectAb_FloorIconImage.sprite = sprite;
+                        }
+                    };
+                    PatchClass.LevelUpUI_HideSelectAbRoutine.FixEnumerator fixEnumerator = new PatchClass.LevelUpUI_HideSelectAbRoutine.FixEnumerator
+                    {
+                        enumerator = __result,
+                        postItemAction = postItemAction
+                    };
+                    __result = fixEnumerator.GetEnumerator();
+                }
+            }
+
+            // Token: 0x02000026 RID: 38
+            private class FixEnumerator : IEnumerable
+            {
+                // Token: 0x0600006B RID: 107 RVA: 0x00004C70 File Offset: 0x00002E70
+                IEnumerator IEnumerable.GetEnumerator()
+                {
+                    return this.GetEnumerator();
+                }
+
+                // Token: 0x0600006C RID: 108 RVA: 0x00004C88 File Offset: 0x00002E88
+                public IEnumerator GetEnumerator()
+                {
+                    while (this.enumerator.MoveNext())
+                    {
+                        object item = this.enumerator.Current;
+                        yield return item;
+                        this.postItemAction(item);
+                        item = null;
+                        item = null;
+                        item = null;
+                    }
+                    yield break;
+                }
+
+                // Token: 0x04000029 RID: 41
+                public IEnumerator enumerator;
+
+                // Token: 0x0400002A RID: 42
+                public Action<object> postItemAction;
+            }
+        }
+
+        /// <summary>
         /// 専用の本をゲーム開始時に獲得する
         /// </summary>
         // Token: 0x0200002A RID: 42
@@ -431,9 +592,9 @@ namespace Maru_Mod
 
             // 各種xmlとリソースの読み込み処理
             ModUtil.path = Path.GetDirectoryName(Uri.UnescapeDataString(new UriBuilder(Assembly.GetExecutingAssembly().CodeBase).Path));
+             LoadArtworks(new DirectoryInfo(ModUtil.path + "/ArtWork"));
             LoadEmotionalCards();
             LoadAbnormalityCardLocalize();
-            LoadArtworks(new DirectoryInfo(ModUtil.path + "/ArtWork"));
 
             // PatchClassにあるパッチを全部読みこんでデバッグ用のlogを出してる
             // このModの「同じアセンブリあるよ」っていうエラーを全部消す
@@ -455,7 +616,7 @@ namespace Maru_Mod
                         EmotionCardXmlRoot root =
                             (EmotionCardXmlRoot)new XmlSerializer(typeof(EmotionCardXmlRoot)).Deserialize(reader);
 
-                        MaruEmotionSelectControl.SetExEmotionCardsList(root.emotionCardXmlList);
+                        EmotionSelectControl.SetExEmotionCardsList(root.emotionCardXmlList);
                     }
                 }
                 catch (Exception e)

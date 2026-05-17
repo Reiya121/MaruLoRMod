@@ -79,8 +79,8 @@
     <Compile Include="EmotionCardAbility_Nurlatohotep.cs" />
     <Compile Include="EmotionCardAbility_Sakura.cs" />
     <Compile Include="EmotionCardAbility_Takuru.cs" />
+    <Compile Include="EmotionSelectControl.cs" />
     <Compile Include="MaruBase.cs" />
-    <Compile Include="MaruEmotionSelectControl.cs" />
     <Compile Include="Maru_Passive.cs" />
     <Compile Include="Maru_Util.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
